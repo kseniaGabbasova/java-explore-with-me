@@ -3,15 +3,15 @@ services:
   stats-server:
     build: ./stats/stats-server
     image: stat-server
-    container_name: stat-server-cont
+    container_name: stat-server
     ports:
       - "9090:9090"
     depends_on:
       - stats-db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/statsDb
-      - SPRING_DATASOURCE_USER=root
-      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_USER=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
       - DB_NAME=statsDb
       - DB_HOST=stats-db
         DB_PORT=5432
@@ -19,12 +19,15 @@ services:
   stats-db:
     image: postgres:14-alpine
     container_name: statsDb
+    restart: always
+    volumes:
+      - /var/lib/postgresql/data
     ports:
       - "6541:5432"
     environment:
       - POSTGRES_DB=statsDb
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
 
   ewm-service:
     build: ./explore-main
