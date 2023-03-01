@@ -9,15 +9,15 @@ services:
     depends_on:
       - stats-db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/statsDb
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/postgres
       - SPRING_DATASOURCE_USER=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
-      - DB_NAME=statsDb
+      - DB_NAME=postgres
       - DB_HOST=stats-db
         DB_PORT=5432
 
   stats-db:
-    image: postgres:14-alpine
+    image: postgres:14.6
     container_name: statsDb
     restart: always
     volumes:
@@ -25,9 +25,9 @@ services:
     ports:
       - "6541:5432"
     environment:
-      - POSTGRES_DB=statsDb
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
 
   ewm-service:
     build: ./explore-main
@@ -42,8 +42,8 @@ services:
       - application.name=explore-main
       - stats-server.url=http://stats-server:9090
       - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/emwDb
-      - SPRING_DATASOURCE_USER=root
-      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_USER=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
       - DB_NAME=emwDb
       - DB_HOST=db
         DB_PORT=5444
@@ -55,5 +55,5 @@ services:
       - "6540:5432"
     environment:
       - POSTGRES_DB=emwDb
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
