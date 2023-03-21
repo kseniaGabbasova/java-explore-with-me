@@ -1,4 +1,4 @@
-package statsClient;
+package client;
 
 import dto.HitEndpointDto;
 import dto.StatDto;
