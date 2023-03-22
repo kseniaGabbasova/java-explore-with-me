@@ -27,7 +27,8 @@ public class RequestService {
     public Object createRequest(long userId, long eventId) {
         log.debug("Получен запрос на создание запроса на участие пользователя {}", userId);
         Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Событие с id" + eventId + "не найдено",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         List<Request> requests = requestRepository.findAllByRequester_IdAndEvent_Id(userId, eventId);
         checkRequest(userId, stored, requests);
         return RequestMapper.INSTANCE.toRequestDto(requestRepository.save(creatingRequest(userId, stored)));
@@ -36,9 +37,11 @@ public class RequestService {
     public Object updCancelStatus(Long userId, Long requestId) {
         log.debug("Получен запрос на изменение статуса запроса на участие пользователя {}", userId);
         userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         Request requestStored = requestRepository.findById(requestId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Запрос с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         requestStored.setStatus(Request.RequestStatus.CANCELED);
         return RequestMapper.INSTANCE.toRequestDto(requestRepository.save(requestStored));
     }
@@ -46,7 +49,8 @@ public class RequestService {
     public Object getAllRequestsForUser(Long userId) {
         log.debug("Получение всех запросов пользователя {}", userId);
         userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         List<Request> storedRequests = requestRepository.findAllByRequesterId(userId);
         return storedRequests
                 .stream()
@@ -56,9 +60,11 @@ public class RequestService {
 
     public Object getAllRequestsByEventId(Long eventId, Long userId) {
         eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Событие с id" + eventId + "не найдено",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         List<Request> storedRequests =
                 requestRepository.findAllByEvent_Id(eventId);
         return storedRequests.stream().map(RequestMapper.INSTANCE::toRequestDto).collect(Collectors.toList());
@@ -66,9 +72,11 @@ public class RequestService {
 
     public ListRequestDto updateRequestsStatusForEvent(Long eventId, Long userId, RequestDtoWithStatus dto) {
         Event storedEvent = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Событие с id" + eventId + "не найдено",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         List<Request> requestsForUpdate = requestRepository.findStoredUpdRequests(eventId, dto.getRequestIds());
         checkRequestsListForUpdate(dto.getStatus(), storedEvent, requestsForUpdate);
         eventRepository.save(storedEvent);
@@ -95,10 +103,12 @@ public class RequestService {
             if (storedEvent.getParticipantLimit() == 0) {
                 request.setStatus(Request.RequestStatus.REJECTED);
                 requestRepository.save(request);
-                throw new ConflictException("Нет свободных мест в событиии");
+                throw new ConflictException("Мест нет",
+                        "Нет свободных мест в событиии", LocalDateTime.now());
             }
             if (!request.getStatus().equals(Request.RequestStatus.PENDING)) {
-                throw new ConflictException("Обновление невозможно для статуса" + Request.RequestStatus.PENDING);
+                throw new ConflictException("Запрос не в ожидании",
+                        "Обновление возможно для статсуса" + Request.RequestStatus.PENDING, LocalDateTime.now());
             }
             if (newStatus.equals(Request.RequestStatus.CONFIRMED)) {
                 request.setStatus(Request.RequestStatus.CONFIRMED);
@@ -114,16 +124,20 @@ public class RequestService {
 
     private void checkRequest(long userId, Event stored, List<Request> requests) {
         if (requests.size() != 0) {
-            throw new ConflictException("Нельзя повторно отправлять запрос на участие");
+            throw new ConflictException("Попытка повторного запроса",
+                    "Нельзя повторно отправлять запрос на участие", LocalDateTime.now());
         }
         if (stored.getInitiator().getId() == userId) {
-            throw new ConflictException("Нельзя ходить на свои мероприятия как гость");
+            throw new ConflictException("Вы инициатор",
+                    "Нельзя ходить на свои мероприятия как гость", LocalDateTime.now());
         }
         if (!stored.getState().equals(Event.State.PUBLISHED)) {
-            throw new ConflictException("Нельзя подать запрос на неопубликованное событие");
+            throw new ConflictException("Событие не опубликовано",
+                    "Нельзя подать запрос на неопубликованное событие", LocalDateTime.now());
         }
         if (stored.getParticipantLimit() == 0) {
-            throw new ConflictException("Нет свободных мест в событиии");
+            throw new ConflictException("Мест нет",
+                    "Нет свободных мест в событиии", LocalDateTime.now());
         }
     }
 
@@ -137,7 +151,8 @@ public class RequestService {
             request.setStatus(Request.RequestStatus.PENDING);
         }
         User requester = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         request.setRequester(requester);
         request.setEvent(stored);
         request.setCreated(LocalDateTime.now());

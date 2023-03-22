@@ -53,14 +53,15 @@ public class CompilationService {
     public void deleteCompilationById(Long compId) {
         log.info("Удаление подборки admin");
         compilationRepository.findById(compId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или недоступен"));
+                new NotFoundException("Подборка с id" + compId + "не найдена",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         compilationRepository.deleteById(compId);
     }
 
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
         log.info("Создание новой подборки admin");
         if (newCompilationDto.getTitle() == null) {
-            throw new ValidationException("Пустой заголовок");
+            throw new ValidationException("Пустой заголовок", "Заголовок не может быть пустым", LocalDateTime.now());
         }
         List<Event> storedEvents = eventRepository.findAllByEvents(newCompilationDto.getEvents());
         Compilation compilation = new Compilation(null, storedEvents, newCompilationDto.isPinned(), newCompilationDto.getTitle());
@@ -71,7 +72,8 @@ public class CompilationService {
     public CompilationDto updateCompilation(Long compId, UpdateCompilationDto updatingCompilationDto) {
         log.info("Обновление подборки подборки admin");
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Подборка с id" + compId + "не найдена",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         Compilation newCompilation = createCompilationForUpdate(compilation, updatingCompilationDto);
         compilationRepository.save(newCompilation);
         return createCompilationDto(newCompilation);
@@ -81,7 +83,8 @@ public class CompilationService {
     public CompilationDto getCompilationById(Long compId) {
         log.info("Получение подборки по id {}", compId);
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Подборка с id" + compId + "не найдена",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         return createCompilationDto(compilation);
     }
 

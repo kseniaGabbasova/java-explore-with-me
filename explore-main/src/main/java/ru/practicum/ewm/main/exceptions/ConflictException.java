@@ -1,7 +1,12 @@
 package ru.practicum.ewm.main.exceptions;
 
-public class ConflictException extends RuntimeException {
-    public ConflictException(String message) {
-        super(message);
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+
+@Getter
+public class ConflictException extends RootException {
+    public ConflictException (String message, String reason, LocalDateTime timestamp) {
+            super(message, reason, timestamp);
     }
 }

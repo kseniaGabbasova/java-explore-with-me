@@ -64,9 +64,11 @@ public class EventService {
         validator.validateNewEventDto(newEvent);
         log.info("Создание события в категории {}", newEvent.getCategory());
         User initiator = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         Category stored = categoryRepository.findById(newEvent.getCategory()).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Категория с id" + newEvent.getCategory() + "не найдена",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         Event newEventEntity = creatingNewEvent(newEvent, initiator, stored);
         return EventMapper.INSTANCE.toEventDto(eventRepository.save(newEventEntity));
     }
@@ -75,7 +77,8 @@ public class EventService {
         log.info("Получение информации о событии пользователем");
         Pageable pageable = PageRequest.of(from / size, size);
         userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         return eventRepository.getOwnerEvents(userId, pageable).stream()
                 .map(EventMapper.INSTANCE::toEventShortDto).collect(Collectors.toList());
     }
@@ -83,37 +86,28 @@ public class EventService {
     public Object getEventsByUserAndEventId(Long userId, Long eventId) {
         log.info("Получение информации о событии пользователем");
         userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Пользователь с id" + userId + "не найден",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Событие с id" + eventId + "не найдено",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         return EventMapper.INSTANCE.toEventDto(stored);
     }
 
     public Object updateEventsByUser(Long userId, Long eventId, UpdateEventDto eventUpdateDto) {
         log.info("Обновление события пользователем");
         Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Событие с id" + eventId + "не найдено",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         validator.updValidationDtoForUser(userId, eventUpdateDto, stored);
         return EventMapper.INSTANCE.toEventDto(eventRepository.save(createUserUpdateEvent(stored, eventUpdateDto)));
-    }
-
-    public Object getEventsForAdmin(List<Long> users, List<Event.State> states, List<Long> categories,
-                                    LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size) {
-        log.info("Получение информации о событиях с фильтрами admin");
-        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
-        Predicate predicate = predicateForAdminFilter(users, states, categories, rangeStart, rangeEnd).getValue();
-        log.info("Получение информации о событиях с фильтрами admin из репозиория");
-        List<ExtendedEventDto> eventFullDtoList = eventRepository.findAll(Objects.requireNonNull(predicate), pageable).getContent()
-                .stream()
-                .map(EventMapper.INSTANCE::toEventFullDto)
-                .collect(Collectors.toList());
-        return eventFullDtoList.stream().map(this::preparingFullDtoWithStat).collect(Collectors.toList());
     }
 
     public Object updateEventsByAdmin(Long eventId, AdminEventDto eventUpdateAdminDto) {
         log.info("Обновление события админом");
         Event stored = eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Запрашиваемый объект не найден или не доступен"));
+                new NotFoundException("Событие с id" + eventId + "не найдено",
+                        "Запрашиваемый объект не найден или не доступен", LocalDateTime.now()));
         validator.updValidationDtoForAdmin(stored, eventUpdateAdminDto);
         return EventMapper.INSTANCE.toEventDto(eventRepository.save(createAdminUpdateEvent(stored, eventUpdateAdminDto)));
     }
@@ -124,7 +118,8 @@ public class EventService {
         try {
             stored = eventRepository.findByIdAndState(id, Event.State.PUBLISHED);
         } catch (RuntimeException runtimeException) {
-            throw new NotFoundException("Запрашиваемый объект не найден или не доступен");
+            throw new NotFoundException("Событие с id" + id + "не найдено",
+                    "Запрашиваемый объект не найден или не доступен", LocalDateTime.now());
         }
         statClient.addHit(request);
         ExtendedEventDto eventFullDto = EventMapper.INSTANCE.toEventFullDto(stored);
@@ -152,6 +147,19 @@ public class EventService {
         return eventFullDtoList.stream().map(this::preparingFullDtoWithStat).collect(Collectors.toList());
     }
 
+    public Object getEventsForAdmin(List<Long> users, List<Event.State> states, List<Long> categories,
+                                    LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size) {
+        log.info("Получение информации о событиях с фильтрами admin");
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
+        Predicate predicate = predicateForAdminFilter(users, states, categories, rangeStart, rangeEnd).getValue();
+        log.info("Получение информации о событиях с фильтрами admin из репозиория");
+        List<ExtendedEventDto> eventFullDtoList = eventRepository.findAll(Objects.requireNonNull(predicate), pageable).getContent()
+                .stream()
+                .map(EventMapper.INSTANCE::toEventFullDto)
+                .collect(Collectors.toList());
+        return eventFullDtoList.stream().map(this::preparingFullDtoWithStat).collect(Collectors.toList());
+    }
+
     private Event createAdminUpdateEvent(Event stored, AdminEventDto eventUpdateAdminDto) {
         Event updEventWithoutState = EventMapper.INSTANCE.updateEventWithUser(eventUpdateAdminDto, stored);
         if (eventUpdateAdminDto.getCategory() != null) {
@@ -163,6 +171,21 @@ public class EventService {
             updEventWithoutState.setPublishedOn(LocalDateTime.now());
         }
         if (Objects.equals(AdminEventDto.State.REJECT_EVENT, eventUpdateAdminDto.getStateAction())) {
+            updEventWithoutState.setState(Event.State.CANCELED);
+        }
+        return updEventWithoutState;
+    }
+
+    private Event createUserUpdateEvent(Event stored, UpdateEventDto eventUpdateDto) {
+        Event updEventWithoutState = EventMapper.INSTANCE.updateEventWithUser(eventUpdateDto, stored);
+        if (eventUpdateDto.getCategory() != null) {
+            Category newCategory = categoryRepository.findById(eventUpdateDto.getCategory()).get();
+            updEventWithoutState.setCategory(newCategory);
+        }
+        if (Objects.equals(UpdateEventDto.State.SEND_TO_REVIEW, eventUpdateDto.getStateAction())) {
+            updEventWithoutState.setState(Event.State.PENDING);
+        }
+        if (Objects.equals(UpdateEventDto.State.CANCEL_REVIEW, eventUpdateDto.getStateAction())) {
             updEventWithoutState.setState(Event.State.CANCELED);
         }
         return updEventWithoutState;
@@ -223,21 +246,6 @@ public class EventService {
             booleanBuilder.and(qEvent.eventDate.after(LocalDateTime.now()));
         }
         return booleanBuilder;
-    }
-
-    private Event createUserUpdateEvent(Event stored, UpdateEventDto eventUpdateDto) {
-        Event updEventWithoutState = EventMapper.INSTANCE.updateEventWithUser(eventUpdateDto, stored);
-        if (eventUpdateDto.getCategory() != null) {
-            Category newCategory = categoryRepository.findById(eventUpdateDto.getCategory()).get();
-            updEventWithoutState.setCategory(newCategory);
-        }
-        if (Objects.equals(UpdateEventDto.State.SEND_TO_REVIEW, eventUpdateDto.getStateAction())) {
-            updEventWithoutState.setState(Event.State.PENDING);
-        }
-        if (Objects.equals(UpdateEventDto.State.CANCEL_REVIEW, eventUpdateDto.getStateAction())) {
-            updEventWithoutState.setState(Event.State.CANCELED);
-        }
-        return updEventWithoutState;
     }
 
     private ExtendedEventDto preparingFullDtoWithStat(ExtendedEventDto eventFullDto) {

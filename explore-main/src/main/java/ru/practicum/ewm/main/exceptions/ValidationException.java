@@ -1,7 +1,12 @@
 package ru.practicum.ewm.main.exceptions;
 
-public class ValidationException extends RuntimeException {
-    public ValidationException(String message) {
-        super(message);
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+
+@Getter
+public class ValidationException extends RootException {
+    public ValidationException(String message, String reason, LocalDateTime timestamp) {
+        super(message, reason, timestamp);
     }
 }

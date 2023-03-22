@@ -1,7 +1,12 @@
 package ru.practicum.ewm.main.exceptions;
 
-public class NotFoundException extends RuntimeException {
-    public NotFoundException(String message) {
-        super(message);
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+
+@Getter
+public class NotFoundException extends RootException {
+    public NotFoundException(String message, String reason, LocalDateTime timestamp) {
+        super(message, reason, timestamp);
     }
 }

@@ -13,6 +13,7 @@ import ru.practicum.ewm.main.user.model.UserMapper;
 import ru.practicum.ewm.main.user.repo.UserRepository;
 import ru.practicum.ewm.main.validator.Validator;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,8 @@ public class UserService {
         if (userRepository.findAll()
                 .stream()
                 .anyMatch(u -> u.getEmail().equals(user.getEmail()))) {
-            throw new ConflictException("Имя уже используется");
+            throw new ConflictException("Имя уже используется", "Не соблюдены условия уникальности имени",
+                    LocalDateTime.now());
         }
         return UserMapper.INSTANCE.toDto(userRepository.save(UserMapper.INSTANCE.toUser(user)));
     }
@@ -38,7 +40,8 @@ public class UserService {
     public void deleteUser(Long id) {
         log.debug("Получен запрос на удаление пользователя {}", id);
         userRepository.findById(id).orElseThrow(() ->
-                new NotFoundException("Пользователь с id" + id + "не найден"));
+                new NotFoundException("Пользователь с id" + id + "не найден", "Запрашиваемый объект не найден или не доступен",
+                        LocalDateTime.now()));
         userRepository.deleteById(id);
     }
 
