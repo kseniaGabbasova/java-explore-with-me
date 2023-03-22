@@ -1,3 +1,5 @@
+package client;
+
 import dto.HitEndpointDto;
 import dto.StatDto;
 import lombok.RequiredArgsConstructor;
