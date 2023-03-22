@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Getter
 public class ConflictException extends RootException {
-    public ConflictException (String message, String reason, LocalDateTime timestamp) {
-            super(message, reason, timestamp);
+    public ConflictException(String message, String reason, LocalDateTime timestamp) {
+        super(message, reason, timestamp);
     }
 }
