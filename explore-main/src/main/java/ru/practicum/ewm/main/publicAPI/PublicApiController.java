@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.main.category.service.CategoryService;
 import ru.practicum.ewm.main.compilation.CompilationService;
 import ru.practicum.ewm.main.event.service.EventService;
-//import ru.practicum.ewm.main.event.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
