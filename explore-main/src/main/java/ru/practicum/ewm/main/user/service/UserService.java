@@ -13,7 +13,6 @@ import ru.practicum.ewm.main.user.model.UserMapper;
 import ru.practicum.ewm.main.user.repo.UserRepository;
 import ru.practicum.ewm.main.validator.Validator;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
