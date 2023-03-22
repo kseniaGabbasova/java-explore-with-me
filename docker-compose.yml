@@ -1,6 +1,6 @@
 version: '3.1'
 services:
-  stats-server:
+  stat-server:
     build: ./stats/stats-server
     image: stat-server
     container_name: stat-server
@@ -21,7 +21,7 @@ services:
     container_name: statsDb
     restart: always
     volumes:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql/data1
     ports:
       - "6541:5432"
     environment:
@@ -36,17 +36,17 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - stats-server
+      - stat-server
       - ewm-db
     environment:
       - application.name=explore-main
-      - stats-server.url=http://stats-server:9090
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/emw-db
+      - stat-server.url=http://stat-server:9090
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://emw-db:5432/emw-db
       - SPRING_DATASOURCE_USER=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - DB_NAME=emw-db
-      - DB_HOST=db
-        DB_PORT=5444
+      - DB_HOST=emw-db
+        DB_PORT=5432
 
   ewm-db:
     image: postgres:14.6
